@@ -122,7 +122,40 @@ def select_10(student_id, teacher_id):
         .group_by(Subject.id)
         .all()
     )
-    print(len(sel))
+    return sel
+
+
+def select_adv_1(teacher_id, student_id):
+    sel = (
+        session.query(func.round(func.avg(Grade.grade), 2))
+        .select_from(Grade)
+        .join(Subject, Subject.teacher_id == teacher_id)
+        .filter(Grade.student_id == student_id)
+        .scalar()
+    )
+    return sel
+
+
+def select_adv_2(group_id, subject_id):
+    max_date_subquery = (
+        session.query(func.max(Grade.date))
+        .join(Student)
+        .filter(Student.group_id == group_id, Grade.subject_id == subject_id)
+        .correlate(Student)
+        .as_scalar()
+    )
+    sel = (
+        session.query(Student.id, Student.name, Grade.grade, Grade.date)
+        .select_from(Grade)
+        .join(Student, Student.id == Grade.student_id)
+        .filter(
+            and_(
+                Student.group_id == group_id,
+                Grade.subject_id == subject_id,
+                Grade.date == max_date_subquery,
+            )
+        )
+    ).all()
     return sel
 
 
@@ -136,4 +169,6 @@ if __name__ == "__main__":
     # print(select_7(1, 2))
     # print(select_8(4))
     # print(select_9(2))
-    print(select_10(1, 3))
+    # print(select_10(1, 3))
+    # print(select_adv_1(1, 4))
+    print(select_adv_2(1, 2))
